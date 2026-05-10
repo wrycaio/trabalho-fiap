@@ -4,127 +4,103 @@
 > **Professor:** Leonardo Pinho  
 > **Tema:** Fintech / Open Banking / Arquitetura Orientada a Eventos  
 
----
+## 1. Story Telling – O Problema e o Tema
 
-## 1. Story Telling – Qual é o problema e o tema?
+Todo mês, o departamento de tesouraria do **FIAP Bank** enfrenta um obstáculo recorrente: o fechamento do caixa. O banco opera com investimentos internacionais e movimenta milhares de transações entre Brasil e Estados Unidos — câmbio, transferências, taxas e estornos. Contudo, quando chega o momento de conciliar o saldo da **ledger** (livro-razão interno) com o saldo real das contas mantidas nos bancos parceiros americanos, o processo se revela frágil e excessivamente manual.
 
-Imagina a cena: todo mês o pessoal da tesouraria do **FIAP Bank** vira noites pra conseguir fechar o caixa. O banco mexe com investimento internacional, então tem transação saindo e chegando dos EUA o tempo todo — câmbio, transferência, taxa, estorno. Só que na hora de bater o que está na **ledger** (o livro-razão interno) com o saldo real que está nas contas dos bancos parceiros lá fora... vira um caos.
+Atualmente, os analistas exportam planilhas de sistemas distintos e passam horas cruzando dados. Qualquer divergência, por menor que seja, paralisa o fechamento contábil. A raiz do problema está na natureza assimétrica das fontes: a ledger opera em lotes diários, enquanto as contas bancárias oscilam em tempo real com liquidações, estornos e tarifas. Conciliar o estático com o dinâmico sem uma camada de automação robusta é ineficiente e arriscado.
 
-Hoje o processo é basicamente artesanal: exportam planilha de um lado, planilha do outro, ficam cruzando dados na mão e torcendo pra não ter diferença. E se tiver divergência — mesmo que seja centavo — o fechamento trava. O problema raiz é simples: a ledger opera em lote (batch), enquanto as contas nos bancos oscilam em tempo real. Um é estático, o outro dinâmico. Conciliar os dois sem automação é receita pra dor de cabeça.
+O tema escolhido para este trabalho é **Open Banking & Arquitetura Orientada a Eventos com Data Streaming**, alinhado aos valores de Pioneirismo e Tecnologia do FIAP Bank. A solução proposta — **LedgerSync** — consiste em uma plataforma que captura eventos transacionais em tempo real oriundos dos bancos parceiros, concilia automaticamente com a ledger interna e notifica imediatamente qualquer divergência, eliminando a dependência do fechamento mensal para identificar problemas.
 
-A gente escolheu trabalhar com **Arquitetura Orientada a Eventos com Data Streaming** como tema, que casa direitinho com os valores do FIAP Bank de Pioneirismo e Tecnologia. A ideia é criar uma plataforma — batizada de **LedgerSync** — que fica ouvindo as transações conforme elas acontecem, concilia com a ledger automaticamente e já avisa se tem algo estranho, sem precisar esperar o fechamento do mês.
+## 2. O Que Esperamos Aprender com Este Projeto
 
----
+O trabalho nos permite explorar, na prática e em profundidade, os seguintes tópicos:
 
-## 2. O que esperamos aprender com esse projeto?
+- Projetar uma arquitetura orientada a eventos capaz de resolver um problema real de conciliação financeira.
+- Aplicar o modelo C4 (Contexto, Contêiner, Componente) como ferramenta de comunicação de decisões arquiteturais.
+- Modelar um domínio financeiro complexo utilizando eventos de negócio e streams de dados.
+- Compreender os trade-offs entre consistência eventual e processamento em tempo real no contexto financeiro.
 
-A real é que a gente quer sair desse trabalho entendendo de verdade como funciona uma arquitetura orientada a eventos na prática, não só na teoria. As coisas que mais interessam:
+## 3. Perguntas Que Precisam Ser Respondidas
 
-- Como desenhar um sistema que resolve um problema de conciliação financeira com eventos e streaming
-- Aplicar C4 Model de verdade — contexto, container, componente — e ver se ajuda mesmo a explicar arquitetura
-- Modelar domínio financeiro que é cheio de regra e burocracia
-- Entender os trade-offs chatos de consistência eventual versus tempo real
+1. Como capturar eventos transacionais em tempo real de múltiplos bancos parceiros, cada qual com seu formato proprietário?
+2. Como modelar o estado da ledger para que reflita o saldo real com a menor latência possível?
+3. Qual estratégia de reconciliação adotar: processamento em lote, em streaming ou uma abordagem híbrida?
+4. Como assegurar idempotência no reprocessamento de eventos financeiros, evitando duplicidades que comprometam os saldos?
+5. Como tratar as divergências que o sistema não consegue resolver de forma automatizada?
 
----
+## 4. Principais Riscos
 
-## 3. Que perguntas a gente precisa responder?
-
-1. Como capturar eventos de transação de vários bancos diferentes em tempo real, cada um com seu formato maluco?
-2. Como fazer a ledger refletir o saldo real com o mínimo de atraso possível?
-3. Vale mais a pena processar em batch, streaming, ou um meio-termo?
-4. Como evitar processar o mesmo evento duas vezes e bagunçar o saldo?
-5. O que fazer quando o sistema não consegue resolver a divergência sozinho?
-
----
-
-## 4. Quais são os principais riscos?
-
-| Risco | Impacto | Chance |
+| Risco | Impacto | Probabilidade |
 |---|---|---|
-| Processar evento duplicado e zoar o saldo da ledger | Alto | Média |
-| Pipeline demorar demais e alerta chegar atrasado | Alto | Média |
-| Cada banco mandar dado num formato diferente e a normalização virar um inferno | Médio | Alta |
-| O time de tesouraria não confiar no sistema novo e continuar fazendo na mão | Médio | Alta |
-| Dados financeiros vazarem | Crítico | Baixa |
-| Sistema não aguentar o tranco no dia do fechamento mensal | Alto | Média |
+| Inconsistência entre ledger e saldo real por eventos duplicados | Alto | Média |
+| Latência excessiva no pipeline de eventos, atrasando alertas | Alto | Média |
+| Heterogeneidade nos formatos de eventos enviados pelos bancos parceiros | Médio | Alta |
+| Resistência da equipe de tesouraria em abandonar o processo manual | Médio | Alta |
+| Vazamento de dados financeiros sensíveis | Crítico | Baixa |
+| Sobrecarga da plataforma nos picos de fechamento mensal | Alto | Média |
 
----
+## 5. Plano Para Aprender o Necessário
 
-## 5. Plano de aprendizado
-
-| O que estudar | Como | Quando |
+| O que aprender | Como | Prazo |
 |---|---|---|
-| Event Sourcing, CQRS, Saga (padrões de evento) | Estudar documentação e fazer uma PoC | Semana 1-2 |
-| APIs de Open Banking (Bacen e bancos EUA) | Ler documentação oficial, testar sandbox | Semana 2-3 |
-| Kafka e Kafka Streams | Mão na massa, subir cluster local | Semana 2-3 |
-| Como funciona uma ledger contábil de verdade (double-entry) | Chamar um contador pra explicar, sem zoeira | Semana 1 |
-| Batch vs Streaming pra conciliação | Fazer um spike técnico e comparar | Semana 3 |
+| Padrões de arquitetura orientada a eventos (Event Sourcing, CQRS, Saga) | Estudo dirigido e prova de conceito | Semana 1-2 |
+| Integração com APIs de Open Banking (Bacen, parceiros EUA) | Documentação oficial e ambiente sandbox | Semana 2-3 |
+| Apache Kafka e Kafka Streams para processamento de streams | Laboratório prático | Semana 2-3 |
+| Modelagem de domínio contábil (partidas dobradas) | Consultoria com especialista contábil | Semana 1 |
+| Comparação entre reconciliação batch e streaming | Spike técnico comparativo | Semana 3 |
 
----
+## 6. Plano Para Reduzir os Riscos
 
-## 6. Plano pra reduzir os riscos
-
-| Risco | Como mitigar |
+| Risco | Mitigação |
 |---|---|
-| Evento duplicado | Idempotency-key + deduplicação no próprio Kafka |
-| Latência no pipeline | Particionar por conta; parallel consumers; monitorar lag |
-| Formatos diferentes de cada banco | Anti-corruption layer com schema registry padronizando tudo |
-| Resistência do time da tesouraria | Rodar em shadow mode primeiro (sistema novo do lado do antigo) e UX bem simples |
-| Vazamento de dados | TLS 1.3 em trânsito, AES-256 em repouso, dados mascarados em dev |
-| Pico de carga no fechamento | Auto-scaling dos consumidores no Kubernetes |
+| Eventos duplicados | Idempotência via `idempotency-key` e deduplicação no broker de mensageria |
+| Latência no pipeline | Particionamento por conta no Kafka e consumidores paralelos escaláveis |
+| Formatos heterogêneos | Camada de normalização (Anti-Corruption Layer) com Schema Registry centralizado |
+| Resistência da tesouraria | Interface simplificada e período de operação assistida (shadow mode) |
+| Vazamento de dados | Criptografia TLS 1.3 em trânsito e AES-256 em repouso; anonimização em ambientes de desenvolvimento |
+| Pico de carga no fechamento | Auto-scaling dos consumidores no Kubernetes; dimensionamento elástico |
 
----
+## 7. Partes Interessadas (Stakeholders)
 
-## 7. Stakeholders (partes interessadas)
+- **Diretoria Financeira / CFO** — responsável pelo processo de fechamento contábil.
+- **Tesouraria** — equipe que executa a conciliação manual atualmente e será a principal usuária da plataforma.
+- **TI / Engenharia** — responsável pela construção, manutenção e evolução da plataforma.
+- **Compliance / Auditoria** — necessita de rastreabilidade completa e registros imutáveis.
+- **Bancos Parceiros (EUA)** — provedores dos dados transacionais que alimentam a plataforma.
+- **Reguladores (Bacen, SIPC)** — exigem conformidade regulatória e segurança da informação.
 
-- **CFO / Diretoria Financeira** — dono do processo, quer o fechamento mais rápido e sem erro
-- **Tesouraria** — quem sofre hoje fazendo conciliação manual
-- **TI / Engenharia** — vai construir e sustentar a plataforma
-- **Compliance / Auditoria** — quer tudo rastreável e imutável
-- **Bancos parceiros (EUA)** — mandam os dados de transação
-- **Bacen / SIPC** — reguladores que exigem conformidade
-
----
-
-## 8. O que cada stakeholder espera ganhar?
+## 8. O Que Cada Stakeholder Espera Obter
 
 | Stakeholder | Expectativa |
 |---|---|
-| CFO | Fechamento em horas, não dias. Menos erro. Menos gente operacional. |
-| Tesouraria | Chega de planilha. Saber na hora se tem algo errado, não no fim do mês. |
-| TI | Stack moderna que escala e não dá dor de cabeça em produção. |
-| Compliance | Auditoria com trilha imutável, sem "sumiu um lançamento". |
-| Bancos parceiros | Integração padronizada, menos ticket de divergência pra resolver. |
+| CFO | Fechamento contábil em horas, redução de erros operacionais e corte de custos |
+| Tesouraria | Fim do cruzamento manual de planilhas; detecção de divergências em tempo real |
+| TI | Arquitetura moderna, escalável e com baixa sobrecarga operacional |
+| Compliance | Trilha de auditoria imutável e rastreabilidade de ponta a ponta |
+| Bancos Parceiros | Integração padronizada, com menos chamados por divergência |
 
----
+## 9. Quem São os Usuários
 
-## 9. Quem são os usuários?
+- **Analistas de Tesouraria** — executam a conciliação diária dos saldos.
+- **Gerentes de Tesouraria** — aprovam o fechamento mensal e investigam divergências críticas.
+- **Auditores Internos** — consultam o histórico de reconciliações para fins de auditoria.
+- **Sistemas Externos** — APIs dos bancos parceiros e o ERP contábil da instituição.
 
-- **Analistas de tesouraria** — usam diariamente pra conferir saldos
-- **Gerentes de tesouraria** — aprovam fechamento e investigam coisa grave
-- **Auditores internos** — consultam histórico pra auditoria
-- **Sistemas externos** — APIs de bancos e o ERP contábil
+## 10. O Que Cada Usuário Deseja Realizar
 
----
+- **Analistas:** Verificar se o saldo da ledger coincide com o saldo bancário; classificar divergências; resolver pendências.
+- **Gerentes:** Aprovar o fechamento com segurança; obter visão consolidada da posição financeira.
+- **Auditores:** Rastrear cada lançamento desde a origem bancária até o registro contábil final.
+- **Sistemas Externos:** Enviar e receber eventos transacionais de forma confiável e auditável.
 
-## 10. O que cada usuário quer fazer?
+## 11. Pior Cenário Possível
 
-- **Analista:** Ver se a ledger bate com o banco, classificar divergência, resolver pendência
-- **Gerente:** Aprovar fechamento com segurança, ter visão geral da situação
-- **Auditor:** Rastrear qualquer lançamento do começo ao fim, sem buraco
-- **Sistemas:** Trocar evento de transação de forma confiável, sem perder nada
+Uma divergência não detectada entre a ledger e o saldo real levar o FIAP Bank a reportar incorretamente sua posição financeira aos reguladores (Bacen e SIPC). As consequências incluiriam multas de valor elevado, risco de perda da licença operacional e dano irreparável à reputação da instituição. Considerando que a confiança é um dos valores fundamentais do banco, as repercussões seriam catastróficas.
 
----
+## 12. Diagrama de Arquitetura — Modelo Freeform (Versão Inicial)
 
-## 11. Pior cenário possível
-
-O banco reportar posição financeira errada pros reguladores porque uma divergência passou batida. Resultado: multa pesada do Bacen, problema com a SIPC nos EUA, risco de perder licença e — pior — a confiança dos clientes. Sendo que "confiança" é um dos valores centrais do FIAP Bank. Ia ser catastrófico.
-
----
-
-## 12. Arquitetura Freeform (versão inicial, rabiscada em discussão)
-
-Abaixo o primeiro esboço que a gente fez enquanto discutia a solução:
+O diagrama abaixo representa o primeiro esboço da arquitetura, elaborado durante as discussões iniciais da equipe:
 
 ```mermaid
 flowchart TB
@@ -165,164 +141,141 @@ flowchart TB
     LED -->|"export"| ERP
 ```
 
----
+## 13. Descrição de Cada Componente
 
-## 13. O que cada componente faz
-
-| Componente | Pra que serve |
+| Componente | Responsabilidade |
 |---|---|
-| **Sistemas bancários (EUA)** | São os bancos parceiros que têm o saldo real. Cada um manda transação (débito, crédito, estorno, taxa) no seu formato. |
-| **Ingestion** | Porta de entrada. Aceita REST, Webhook ou até SFTP. Valida que o evento é legítimo e encaminha. |
-| **Normalization Engine** | Camada anti-corrupção. Pega o JSON maluco de cada banco e converte pra um formato padronizado interno. Schema Registry pra versionar. |
-| **Event Bus (Kafka)** | A espinha dorsal. Tudo passa por aqui. Garante que evento não se perde, fica ordenado por conta e dá replay se precisar. |
-| **Reconciliation Engine** | O coração do negócio. Fica ouvindo eventos dos bancos e eventos da ledger, pareia um com o outro, acha match e break. Janela de tempo configurável por banco. |
-| **Ledger Service** | Mantém o livro-razão interno do FIAP Bank (partidas dobradas). Registro imutável de tudo que entra e sai. |
-| **Alert & Exception Service** | Quando o Reconciliation Engine não consegue resolver, manda alerta pro time. Gerencia ticket de investigação. |
-| **Dashboard / API** | Tela pros analistas e gerentes verem status, relatório, mexerem nas pendências. API expõe tudo pro ERP. |
+| **Sistemas Bancários (EUA)** | Fontes externas de verdade que detêm os saldos reais das contas. Enviam eventos transacionais (débito, crédito, estorno, taxa) em formatos proprietários. |
+| **Ingestion** | Porta de entrada da plataforma. Recebe dados via REST, Webhook ou SFTP. Realiza a autenticação, validação e encaminhamento de cada evento. |
+| **Normalization Engine** | Camada anti-corrupção que converte os formatos heterogêneos dos bancos parceiros para um schema canônico interno. Utiliza Schema Registry para versionamento. |
+| **Event Bus (Apache Kafka)** | Espinha dorsal assíncrona da plataforma. Oferece durabilidade, ordenação por conta/partição e capacidade de replay de eventos. Permite múltiplos consumidores independentes. |
+| **Reconciliation Engine** | Núcleo da plataforma. Consome eventos externos e eventos da ledger, comparando-os dentro de janelas temporais configuráveis. Identifica matches, breaks e exceções. |
+| **Ledger Service** | Mantém o livro-razão interno do FIAP Bank no modelo de partidas dobradas. Cada lançamento é registrado de forma imutável, servindo como fonte de verdade para a posição financeira. |
+| **Alert & Exception Service** | Notifica a equipe de tesouraria sobre divergências não resolvidas automaticamente. Cria tickets de investigação e escala conforme a criticidade. |
+| **Dashboard / API** | Interface para analistas e gerentes visualizarem o status da conciliação, relatórios e divergências. Disponibiliza API para integração com o ERP contábil. |
 
----
+## 14. Requisitos Considerados Importantes (Mínimo 5)
 
-## 14. Requisitos que a gente considera importantes (6 no total)
-
-| # | Requisito | Por quê |
+| # | Requisito | Justificativa |
 |---|---|---|
-| 1 | **Idempotência nos eventos** | Processar um débito duas vezes quebra o saldo. Em finanças isso é gravíssimo. |
-| 2 | **Rastreabilidade ponta a ponta** | Auditoria precisa conseguir seguir um lançamento desde o banco americano até o ERP contábil, sem salto. |
-| 3 | **Janela de conciliação configurável por banco** | Cada banco liquida em um prazo (T+0, T+1, T+2). Se a janela for fixa, vai dar match errado. |
-| 4 | **Criptografia em trânsito e em repouso** | Saldo de cliente é dado sensível. TLS 1.3 e AES-256. Em dev, dado mascarado. |
-| 5 | **Resiliência — se um banco cair, não pode perder evento** | Dead-letter queue, retry com backoff exponencial. Kafka salva aqui porque armazena evento em disco. |
-| 6 | **Interface pra resolver divergência manualmente** | Nem tudo vai ser automático. Precisa ter tela que sugere match provável e deixa o analista decidir. |
+| 1 | **Idempotência no processamento de eventos** | Eventos financeiros não podem ser processados mais de uma vez. Um débito duplicado comprometeria tanto a conciliação quanto o saldo contábil. |
+| 2 | **Rastreabilidade ponta a ponta** | Auditoria e compliance exigem que cada evento seja rastreável desde o banco parceiro até o registro final no ERP, sem lacunas. |
+| 3 | **Janela de conciliação configurável por banco** | Diferentes bancos operam com prazos de liquidação distintos (T+0, T+1, T+2). A janela precisa ser flexível para cada parceiro. |
+| 4 | **Segurança e criptografia dos dados** | Dados de saldo e transações são sensíveis. Exigem TLS 1.3 em trânsito, AES-256 em repouso e anonimização em ambientes não produtivos. |
+| 5 | **Resiliência e tolerância a falhas** | A indisponibilidade de um banco parceiro não pode causar perda de eventos. São necessários mecanismos de dead-letter queue e retry com backoff exponencial. |
+| 6 | **Interface para reconciliação manual assistida** | Nem toda divergência será resolvida automaticamente. O sistema deve sugerir correspondências prováveis e permitir a decisão do analista. |
 
----
+## 15. Sobre o Que o Diagrama Ajuda a Raciocinar
 
-## 15. O que o diagrama ajuda a pensar?
+O diagrama Freeform orienta a reflexão sobre quatro pontos centrais:
 
-Quando a gente desenhou esse Freeform, algumas coisas ficaram mais claras:
+- **Separação de responsabilidades:** cada componente possui uma função bem definida — ingestão, normalização, conciliação, persistência e notificação. Isso facilita o debate sobre cada etapa do fluxo.
+- **Desacoplamento via Event Bus:** o Kafka atua como ponto central de integração. Nenhum componente se comunica diretamente com outro, o que permite evolução independente de cada módulo.
+- **Duas fontes de verdade:** a ledger interna e os sistemas bancários externos são duas realidades que precisam ser confrontadas. O sistema não presume uma verdade absoluta única.
+- **Divergência como evento de negócio:** divergências não são tratadas como erros de sistema, mas como ocorrências esperadas que exigem um workflow próprio de tratamento.
 
-- **Separação de responsabilidades** — cada caixa faz uma coisa só: ingerir, normalizar, conciliar, persistir, alertar. Ficou mais fácil discutir cada parte.
-- **O Event Bus como ponto de desacoplamento** — nenhum componente fala direto com outro. Tudo via Kafka. Isso facilita evoluir cada parte sozinha.
-- **Duas fontes de verdade** — a ledger interna e os bancos externos. Não existe "a verdade". O sistema existe pra comparar as duas.
-- **Divergência não é bug, é evento de negócio** — desde o começo a gente tratou "break" como algo normal que precisa de workflow, não como exceção de sistema.
+## 16. Padrões Essenciais no Diagrama
 
----
-
-## 16. Padrões essenciais que aparecem no diagrama
-
-| Padrão | Onde |
+| Padrão | Ocorrência |
 |---|---|
-| **Event-Driven Architecture** | Kafka como backbone. Comunicação assíncrona entre tudo. |
-| **Pipes and Filters** | Ingestion → Normalization → Kafka → Reconciliation → Ledger. Cada estágio transforma o dado. |
-| **Anti-Corruption Layer** | Normalization Engine isola o domínio interno dos formatos proprietários dos bancos. |
-| **CQRS (separação implícita)** | O Reconciliation Engine escreve resultado; o Dashboard lê do Ledger Service. Caminhos diferentes. |
-| **Event Sourcing** | A ledger guarda evento imutável em vez de "saldo atual". Dá pra reconstruir qualquer ponto no tempo. |
+| **Event-Driven Architecture (EDA)** | O Event Bus (Kafka) é o backbone da plataforma; toda comunicação entre componentes é assíncrona e baseada em eventos. |
+| **Pipes and Filters** | O fluxo Ingestion → Normalization → Kafka → Reconciliation → Ledger constitui uma cadeia de transformações sucessivas. |
+| **Anti-Corruption Layer (ACL)** | O Normalization Engine traduz formatos externos para o domínio interno, impedindo que modelos de terceiros contaminem o sistema. |
+| **CQRS (implícito)** | O Reconciliation Engine escreve os resultados; o Dashboard lê do Ledger Service. Os caminhos de escrita e leitura são segregados. |
+| **Event Sourcing** | A ledger armazena eventos imutáveis em vez de um estado de saldo corrente, permitindo reconstruir a posição financeira em qualquer instante. |
 
----
+## 17. Padrões Ocultos
 
-## 17. Tem padrão oculto?
+Uma análise mais aprofundada revela padrões que não estão explicitamente representados no diagrama, mas que são necessários para o funcionamento correto da plataforma:
 
-Tem sim. Conforme fomos cavando, apareceram uns padrões que não estão desenhados mas estão lá:
-
-- **Outbox Pattern** — o Ledger Service precisa garantir que escreveu no banco E publicou o evento no Kafka atomicamente. Se escrever no banco e o Kafka cair naquele momento, o sistema dessincroniza. Outbox resolve isso.
-- **Saga coreografada** — o fluxo de reconciliação é uma mini-saga: recebe evento → normaliza → compara → decide match ou break → persiste → notifica. Se der pau no meio, precisa compensar.
-- **Strangler Fig** — a plataforma nova não vai substituir o processo manual de uma vez. Vai rodar em shadow mode do lado do antigo até ganhar confiança.
-
----
+- **Outbox Pattern:** o Ledger Service precisa assegurar atomicidade entre a escrita no banco de dados e a publicação do evento no Kafka. Se uma das operações falhar sem a outra, o sistema torna-se inconsistente.
+- **Saga (coreografada):** o fluxo de reconciliação pode ser interpretado como uma saga de múltiplos passos (receber evento, normalizar, comparar, decidir match/break, persistir, notificar). A falha em qualquer etapa exige compensação.
+- **Strangler Fig:** a nova plataforma não substituirá o processo manual abruptamente. Haverá um período de shadow mode, durante o qual o sistema novo opera em paralelo ao legado, permitindo validação gradual.
 
 ## 18. Metamodelo
 
-Conceitos fundamentais do domínio e como se relacionam:
+O metamodelo define os conceitos fundamentais do domínio e seus relacionamentos:
 
 ```
 Cliente (1) ─── (N) Conta ─── (1) Banco Parceiro
                            │
-                           └── (N) Transação (externa, veio do banco)
+                           └── (N) Transação (externa)
                                             │
-Ledger (1) ─── (N) Lançamento Contábil ────┘ (faz match 0..1)
+Ledger (1) ─── (N) Lançamento Contábil ────┘ (match 0..1)
                                             │
 Reconciliação (N) ─── (2) [Transação + Lançamento]
                                             │
 Divergência (0..N) ─── (1) Reconciliação
 ```
 
-**As entidades principais:**
+**Entidades principais:**
 
-- **Conta** — conta bancária real num banco parceiro lá fora
-- **Transação (externa)** — evento que veio do banco: débito, crédito, taxa, estorno
-- **Lançamento Contábil** — o registro na ledger interna (partidas dobradas)
-- **Reconciliação** — o pareamento entre transação externa e lançamento contábil
-- **Divergência** — quando não rola match (falta lançamento, falta transação, valor diferente)
+- **Conta:** conta bancária real mantida em um banco parceiro.
+- **Transação (externa):** evento proveniente do banco parceiro (débito, crédito, taxa, estorno).
+- **Lançamento Contábil:** registro na ledger interna, obedecendo ao modelo de partidas dobradas.
+- **Reconciliação:** pareamento entre uma ou mais transações externas e seus correspondentes lançamentos contábeis.
+- **Divergência:** situação em que não é possível estabelecer um pareamento (lançamento órfão, transação sem correspondência, diferença de valor).
 
----
+## 19. O Metamodelo Pode Ser Discernido no Diagrama Único?
 
-## 19. Dá pra ver isso num diagrama só?
+Apenas parcialmente. O diagrama Freeform representa a estrutura de componentes e o fluxo de dados, mas o metamodelo — entidades, relacionamentos e cardinalidades — não está explícito. Seria necessário um diagrama de classes ou entidade-relacionamento complementar. O C4 Model endereça essa limitação ao separar os níveis de abstração: o Contexto mostra atores e sistemas; o Contêiner revela a estrutura técnica; o Componente expõe como as entidades do metamodelo circulam dentro de cada serviço.
 
-Só parcialmente. O Freeform mostra a estrutura e o fluxo de dados, mas o metamodelo mesmo (as entidades, os relacionamentos, cardinalidade) não tá explícito ali. Precisaria de um diagrama de classes ou ER pra isso. Aí que o C4 ajuda: cada nível de zoom mostra uma camada. O Contexto mostra atores; o Container mostra tecnologia; o Componente mostra como as entidades do metamodelo circulam dentro de cada serviço.
+## 20. O Diagrama Está Completo?
 
----
+Não. O diagrama Freeform cobre o fluxo principal, mas omite diversos aspectos relevantes:
 
-## 20. O diagrama está completo?
+- Mecanismos de resiliência: dead-letter queues, políticas de retry, circuit breakers.
+- Infraestrutura transversal: observabilidade (logs, métricas, tracing distribuído), autenticação e autorização.
+- Processos batch complementares: o fechamento mensal ainda pode exigir um job de consolidação.
+- Período de shadow mode: fase de validação em que o sistema opera em paralelo ao legado.
 
-Não. O Freeform cobre o happy path, mas um monte de coisa importante ficou de fora:
+## 21. O Diagrama Poderia Ser Simplificado Mantendo Sua Eficácia?
 
-- Mecanismo de resiliência: dead-letter queue, retry, circuit breaker
-- Observabilidade: log, métrica, tracing distribuído
-- Autenticação e autorização (quem pode acessar o quê)
-- Job batch de fechamento mensal (que ainda vai existir)
-- O shadow mode (período rodando em paralelo com o processo manual)
-
----
-
-## 21. Dá pra simplificar e ainda funcionar?
-
-Dá. Se for apresentar pra CFO ou diretoria, eles não querem saber de Kafka, Schema Registry ou Kotlin. Pra esse público, bastava:
+Sim. Para um público executivo (CFO, Diretoria), uma representação reduzida seria suficiente:
 
 > **Bancos Parceiros → LedgerSync → Tesouraria / ERP**
 
-Ou seja, o nível 1 do C4 resolve. O detalhamento interno é só pra time técnico. A graça do C4 Model é essa: zoom certo pro público certo.
+Esse é justamente o nível de Contexto do C4 Model. O detalhamento interno (Kafka, Schema Registry, Reconciliation Engine) só é relevante para o público técnico. A virtude do C4 Model está exatamente nisto: cada nível de zoom é adequado a um público distinto.
 
----
+## 22. Discussões Relevantes da Equipe
 
-## 22. Discussões importantes que rolaram no grupo
+Três debates foram particularmente produtivos durante a elaboração do projeto:
 
-Três discussões foram mais intensas:
+1. **Batch versus streaming para a reconciliação:** discutimos se o motor de conciliação deveria operar como um job noturno (mais simples e previsível) ou como um pipeline de streaming contínuo (mais rápido, porém mais complexo). Optamos por uma abordagem híbrida: streaming para alertas em tempo real e batch para o fechamento oficial mensal.
 
-1. **Batch ou streaming pra conciliação?** — Tinha quem defendia job noturno (mais simples, domínio conhecido) e quem queria streaming contínuo (mais rápido, mais moderno). No fim optamos por híbrido: streaming pra alerta em tempo real e batch pro fechamento oficial mensal.
+2. **Modelo de persistência da ledger:** Event Sourcing com consistência eventual versus CRUD tradicional com transações ACID. Escolhemos Event Sourcing porque o histórico imutável atende diretamente aos requisitos de auditoria. Adicionamos projeções materializadas para evitar a recomputação completa em cada consulta.
 
-2. **Como persistir a ledger?** — Event Sourcing com consistência eventual ou modelo CRUD clássico com ACID? Fechamos com Event Sourcing porque o histórico imutável resolve auditoria de bandeja. Mas adicionamos projeções materializadas pra não ter que ficar recomputando saldo toda consulta.
+3. **Responsabilidade pelo domínio da reconciliação:** a reconciliação pertence ao bounded context da Ledger ou constitui um domínio separado? Decidimos segregá-los: a Ledger é a fonte de verdade; a Reconciliation é o processo que compara fontes distintas.
 
-3. **Reconciliação é um domínio separado ou faz parte da Ledger?** — Essa deu pano pra manga. No final separamos em dois bounded contexts: Ledger é fonte de verdade, Reconciliation é o processo que compara fontes. Ficou mais limpo.
+## 23. Decisões Que a Equipe Teve Dificuldade Para Tomar
 
----
+1. **Escolha do broker de mensageria:** Apache Kafka (maior carga operacional) ou uma solução gerenciada como Amazon SQS/SNS (menor complexidade de infraestrutura). Kafka prevaleceu devido à capacidade de replay de eventos e à ordenação por partição — características críticas para eventos financeiros.
 
-## 23. Decisões que foram difíceis de tomar
+2. **Armazenamento da ledger:** PostgreSQL com tabela de eventos versus EventStoreDB (banco especializado em Event Sourcing). O PostgreSQL foi escolhido por familiaridade da equipe e pela maturidade do ecossistema de ferramentas disponíveis.
 
-1. **Kafka ou solução gerenciada (SQS/SNS)?** — Kafka exige mais infra, mas tem replay de evento e ordenação por partição. Pra evento financeiro, ordenação é crítico. Kafka ganhou, mas a discussão foi longa.
+3. **Linguagem do Reconciliation Engine:** Python (prototipagem rápida, adequação ao perfil de equipes de dados) versus Kotlin (performance superior e integração nativa com Kafka Streams). Kotlin foi selecionado por oferecer maior robustez em ambientes de produção.
 
-2. **PostgreSQL ou EventStoreDB pra ledger?** — EventStoreDB é feito pra event sourcing, mas ninguém do grupo conhecia a fundo. PostgreSQL com tabela de eventos + projeções é mais manjado. Ficamos com Postgres por familiaridade.
+## 24. Decisões Tomadas Sob Incerteza
 
-3. **Linguagem do Reconciliation Engine?** — Python (time de dados) ou Kotlin (ecossistema Kafka)? Kotlin com Kafka Streams venceu por robustez. Python seria mais rápido de prototipar, mas produção é outra história.
+1. **Volume real de transações do FIAP Bank:** sem dados históricos precisos, superdimensionamos o particionamento do Kafka (100 partições) e projetamos auto-scaling desde a concepção inicial.
 
----
+2. **Adoção de blockchain:** embora mencionada nas informações do case, optamos por prototipar sem blockchain. O Event Sourcing já provê rastreabilidade imutável. Caso surja futuramente a necessidade de compartilhar trilhas de auditoria com entidades externas de forma descentralizada, um ledger distribuído (DLT) poderá ser acoplado como camada complementar.
 
-## 24. Decisões tomadas na incerteza
+3. **Integração com bancos parceiros:** desconhecemos o número exato de bancos e seus protocolos. A camada de Anti-Corruption foi projetada como extensível (adapter por banco), mas o esforço real de integração permanece como incógnita.
 
-1. **Volume real de transações** — a gente não tem dado histórico do FIAP Bank. Chutamos alto: 100 partições no Kafka, auto-scaling desde o começo. Melhor sobrar do que faltar.
+## 25. Ponto de Decisão Sem Retorno
 
-2. **Blockchain?** — o case menciona blockchain, mas depois de discutir vimos que Event Sourcing já dá rastreabilidade imutável. Adiamos blockchain. Se um dia precisar compartilhar trilha de auditoria com regulador externo descentralizado, adicionamos um DLT depois.
+A adoção de **Event Sourcing como padrão de persistência da ledger** constitui um ponto de não retorno arquitetural. Uma vez que os eventos se tornam a fonte primária de verdade:
 
-3. **Quantos bancos parceiros? Protocolos?** — não sabemos. A Anti-Corruption Layer já foi pensada pra ser extensível (adapter por banco), mas o esforço real de integração é uma incógnita.
+- Migrar para um modelo CRUD convencional exigiria reescrever integralmente a camada de domínio.
+- Todas as consultas, relatórios e integrações passam a depender das projeções materializadas.
+- O custo de reverter essa decisão após a entrada em produção seria proibitivo.
 
----
+Em contrapartida, essa decisão desbloqueia capacidades valiosas: replay completo do histórico transacional, trilha de auditoria imutável e flexibilidade para responder a novas perguntas de negócio simplesmente criando novas projeções sobre o mesmo stream de eventos.
 
-## 25. Teve ponto de decisão sem volta?
+## 26 a 29. Arquitetura C4 Model — Três Camadas
 
-Sim: **Event Sourcing como padrão de persistência da ledger**. Depois que sobe com evento como fonte primária de verdade, voltar atrás é basicamente reescrever o sistema. Todas as consultas, relatórios e integrações passam a depender das projeções. Mas por outro lado, essa decisão destrava replay completo de histórico, auditoria imutável e capacidade de responder pergunta nova de negócio só criando projeção nova sobre o stream.
-
----
-
-## 26 a 29. Arquitetura nas 3 camadas do C4
-
-### 26-27. Nível Contexto
+### 26-27. Nível 1: Diagrama de Contexto
 
 ```mermaid
 C4Context
@@ -336,7 +289,7 @@ C4Context
     System_Ext(erp, "ERP Contábil", "Sistema contábil corporativo")
     
     System_Boundary(ledgersync, "Plataforma LedgerSync") {
-        System(plataforma, "LedgerSync", "Ingere eventos, concilia ledger com bancos e dispara alertas de divergência")
+        System(plataforma, "LedgerSync", "Ingere eventos, concilia ledger com bancos e emite alertas de divergência")
     }
 
     Rel(analista, plataforma, "Visualiza conciliações, resolve pendências", "HTTPS/Web")
@@ -346,11 +299,11 @@ C4Context
     Rel(plataforma, erp, "Exporta lançamentos conciliados", "REST/CSV")
 ```
 
-### 28. Nível Container
+### 28. Nível 2: Diagrama de Contêiner
 
 ```mermaid
 C4Container
-    title FIAP Bank – LedgerSync (Diagrama de Container)
+    title FIAP Bank – LedgerSync (Diagrama de Contêiner)
 
     Person(analista, "Analista de Tesouraria")
     Person(gerente, "Gerente de Tesouraria")
@@ -360,17 +313,17 @@ C4Container
     System_Ext(erp, "ERP Contábil")
 
     System_Boundary(ledgersync, "Plataforma LedgerSync") {
-        Container(webapp, "Dashboard SPA", "React + TypeScript", "Interface pros analistas, gerentes e auditores")
+        Container(webapp, "Dashboard SPA", "React + TypeScript", "Interface para analistas, gerentes e auditores")
         Container(api, "API Gateway", "Kotlin + Spring Boot", "Autenticação, rate limiting e roteamento")
-        Container(ingestion, "Ingestion Service", "Go", "Recebe eventos dos bancos (REST/Webhook/SFTP)")
-        Container(normalizer, "Normalization Service", "Kotlin", "Converte formato de cada banco pro schema canônico")
-        Container(kafka, "Event Bus", "Apache Kafka", "Backbone assíncrono com partição por conta")
-        Container(recon_engine, "Reconciliation Engine", "Kotlin + Kafka Streams", "Compara evento externo com ledger e acha divergência")
-        Container(ledger_svc, "Ledger Service", "Kotlin + Spring Boot", "Livro-razão interno com Event Sourcing")
-        Container(alert_svc, "Alert & Exception Service", "Kotlin", "Notifica divergência e gerencia workflow de investigação")
-        ContainerDb(ledger_db, "Ledger DB", "PostgreSQL", "Event store + projeções materializadas")
-        ContainerDb(cache, "Cache", "Redis", "Saldo recente, sessão, rate limiting")
-        Container(schema_reg, "Schema Registry", "Confluent", "Versionamento de schema de evento")
+        Container(ingestion, "Ingestion Service", "Go", "Recebe eventos dos bancos parceiros (REST/Webhook/SFTP)")
+        Container(normalizer, "Normalization Service", "Kotlin", "Converte formatos proprietários para o schema canônico")
+        Container(kafka, "Event Bus", "Apache Kafka", "Backbone assíncrono com particionamento por conta")
+        Container(recon_engine, "Reconciliation Engine", "Kotlin + Kafka Streams", "Compara eventos externos com a ledger, detecta divergências")
+        Container(ledger_svc, "Ledger Service", "Kotlin + Spring Boot", "Mantém o livro-razão interno (Event Sourcing)")
+        Container(alert_svc, "Alert & Exception Service", "Kotlin", "Notifica divergências e gerencia workflow de investigação")
+        ContainerDb(ledger_db, "Ledger DB", "PostgreSQL", "Event store e projeções materializadas")
+        ContainerDb(cache, "Cache", "Redis", "Saldos recentes, sessões e rate limiting")
+        Container(schema_reg, "Schema Registry", "Confluent", "Versionamento de schemas de eventos")
     }
 
     Rel(analista, webapp, "Usa", "HTTPS")
@@ -384,10 +337,10 @@ C4Container
     Rel(normalizer, kafka, "Publica evento normalizado", "Kafka")
     Rel(normalizer, schema_reg, "Valida schema", "REST")
     
-    Rel(kafka, recon_engine, "Consome evento normalizado", "Kafka Streams")
-    Rel(kafka, ledger_svc, "Consome evento normalizado", "Kafka")
-    Rel(ledger_svc, ledger_db, "Lê/Escreve eventos", "JDBC")
-    Rel(recon_engine, ledger_db, "Consulta projeções", "JDBC")
+    Rel(kafka, recon_engine, "Consome eventos normalizados", "Kafka Streams")
+    Rel(kafka, ledger_svc, "Consome eventos normalizados", "Kafka")
+    Rel(ledger_svc, ledger_db, "Lê e escreve eventos", "JDBC")
+    Rel(recon_engine, ledger_db, "Consulta projeções da ledger", "JDBC")
     Rel(recon_engine, kafka, "Publica Match/Break", "Kafka")
     Rel(kafka, alert_svc, "Consome Break", "Kafka")
     Rel(alert_svc, kafka, "Publica alerta processado", "Kafka")
@@ -396,21 +349,21 @@ C4Container
     Rel(ledger_svc, erp, "Exporta conciliado", "REST")
 ```
 
-### 29. Nível Componente – Reconciliation Engine (aberto)
+### 29. Nível 3: Diagrama de Componente — Reconciliation Engine
 
 ```mermaid
 C4Component
     title Reconciliation Engine – Diagrama de Componente
 
     Container_Boundary(recon_engine, "Reconciliation Engine") {
-        Component(matcher, "Transaction Matcher", "Kafka Streams Topology", "Pareia transação externa com lançamento da ledger por janela de tempo e regra configurável")
-        Component(break_detector, "Break Detector", "Kafka Streams Topology", "Acha transação órfã, lançamento sem par e diferença de valor")
-        Component(window_mgr, "Window Manager", "State Store", "Gerencia janela por banco (T+0, T+1, T+2)")
-        Component(tolerance_engine, "Tolerance Engine", "Kafka Streams Processor", "Aplica tolerância (ex: ignora diferença menor que R$ 1,00)")
+        Component(matcher, "Transaction Matcher", "Kafka Streams Topology", "Pareia transações externas com lançamentos da ledger usando janela temporal e regras configuráveis")
+        Component(break_detector, "Break Detector", "Kafka Streams Topology", "Detecta transações sem match, lançamentos órfãos e divergências de valor")
+        Component(window_mgr, "Window Manager", "State Store", "Gerencia janelas de conciliação por banco (T+0, T+1, T+2)")
+        Component(tolerance_engine, "Tolerance Engine", "Kafka Streams Processor", "Aplica tolerâncias (ex.: ignora diferenças inferiores a R$ 1,00)")
         Component(match_store, "Match Store", "RocksDB", "Estado dos matches na janela ativa")
-        Component(recon_repo, "Reconciliation Repository", "Kotlin", "Salva resultado final no Postgres")
-        Component(status_emitter, "Status Emitter", "Kotlin", "Publica evento MATCHED/BREAK/PENDING no Kafka")
-        Component(config_api, "Configuration API", "REST Controller", "Ajusta regra e tolerância em runtime")
+        Component(recon_repo, "Reconciliation Repository", "Kotlin", "Persiste resultados finais no PostgreSQL")
+        Component(status_emitter, "Status Emitter", "Kotlin", "Publica eventos MATCHED/BREAK/PENDING no Kafka")
+        Component(config_api, "Configuration API", "REST Controller", "Permite ajustar regras e tolerâncias em runtime")
     }
 
     ContainerDb(ledger_db, "Ledger DB", "PostgreSQL")
@@ -430,9 +383,9 @@ C4Component
     Rel(config_api, tolerance_engine, "Atualiza regras")
 ```
 
-### 30. Código (Opcional)
+### 30. Nível 4: Código (Opcional)
 
-Só pra dar uma ideia de como a estrutura de pacotes do **Ledger Service** ficaria (Kotlin + Spring Boot):
+Estrutura de pacotes sugerida para o **Ledger Service** (Kotlin + Spring Boot):
 
 ```
 com.fiapbank.ledgersync
@@ -450,47 +403,41 @@ com.fiapbank.ledgersync
 │   ├── infrastructure
 │   │   ├── EventStore.kt
 │   │   ├── Projection.kt
-│   │   └── KafkaPublisher.kt       // outbox
+│   │   └── KafkaPublisher.kt       // outbox pattern
 │   └── application
 │       ├── RecordEntryUseCase.kt
 │       ├── GetBalanceQuery.kt
 │       └── GetAuditTrailQuery.kt
 ```
 
----
+## 31. Validação pelo Checklist do C4 Model
 
-## 31. Checklist C4 Model (validação)
+Os diagramas foram avaliados segundo os critérios do [c4model.com/review](https://c4model.com/review/):
 
-A gente passou os diagramas no checklist do [c4model.com/review](https://c4model.com/review/):
-
-| Critério | Contexto | Container | Componente |
+| Critério | Contexto | Contêiner | Componente |
 |---|---|---|---|
-| Título e legenda | ✔ | ✔ | ✔ |
-| Elementos com nome + tipo | ✔ | ✔ | ✔ |
-| Setas com direção + descrição | ✔ | ✔ | ✔ |
-| Foco claro (um nível de abstração) | ✔ | ✔ | ✔ |
-| Tecnologias visíveis nos rótulos | ✔ | ✔ | ✔ |
-| Não mistura níveis diferentes | ✔ | ✔ | ✔ |
-| Dá pra saber quem é o público | ✔ | ✔ | ✔ |
+| Título e legenda presentes | ✔ | ✔ | ✔ |
+| Elementos possuem nome e tipo | ✔ | ✔ | ✔ |
+| Setas indicam direção e descrição | ✔ | ✔ | ✔ |
+| Foco em um único nível de abstração | ✔ | ✔ | ✔ |
+| Tecnologias explicitadas nos rótulos | ✔ | ✔ | ✔ |
+| Sem mistura de níveis de abstração | ✔ | ✔ | ✔ |
+| Público-alvo identificável | ✔ | ✔ | ✔ |
 
----
+## 32. Vídeo de Apresentação
 
-## 32. Vídeo de apresentação
+Conforme solicitado, será produzido um vídeo abrangendo os seguintes pontos:
 
-A gente vai gravar um vídeo passando por tudo:
+- Contextualização do problema: a conciliação de ledger do FIAP Bank.
+- Apresentação da solução LedgerSync.
+- Explicação dos três níveis do C4 Model (Contexto → Contêiner → Componente).
+- Principais decisões arquiteturais e seus trade-offs.
 
-- Explicar o problema: conciliação de ledger do FIAP Bank
-- Mostrar a solução LedgerSync
-- Passar pelos três níveis do C4 (Contexto, Container, Componente)
-- Comentar as principais decisões de arquitetura e os trade-offs
+Cada integrante do grupo apresentará uma parte do conteúdo. O vídeo será compartilhado com o professor nos endereços `profleonardo.pinho@fiap.com.br` e `leonardo.c.pinho@gmail.com`.
 
-Cada integrante vai apresentar uma parte. O vídeo será compartilhado com o professor em `profleonardo.pinho@fiap.com.br` ou `leonardo.c.pinho@gmail.com`.
+## Stack Tecnológica — Resumo
 
----
-
-## Stack resumida
-
-| Camada | Escolha |
+| Camada | Tecnologia |
 |---|---|
 | Frontend | React + TypeScript |
 | API Gateway | Kotlin + Spring Boot |
@@ -502,14 +449,12 @@ Cada integrante vai apresentar uma parte. O vídeo será compartilhado com o pro
 | Cache | Redis |
 | Alert Service | Kotlin |
 | Observabilidade | OpenTelemetry + Prometheus + Grafana |
-| Infra | Kubernetes (EKS) + Terraform |
-
----
+| Infraestrutura | Kubernetes (EKS) + Terraform |
 
 ## Referências
 
-- [C4 Model – c4model.com](https://c4model.com/)
-- [C4 Model Review Checklist](https://c4model.com/review/)
-- [Kafka Streams Docs](https://kafka.apache.org/documentation/streams/)
-- [Event Sourcing – Martin Fowler](https://martinfowler.com/eaaDev/EventSourcing.html)
-- [Domain-Driven Design – Eric Evans](https://www.domainlanguage.com/ddd/)
+- [C4 Model — Documentação Oficial](https://c4model.com/)
+- [C4 Model — Checklist de Revisão](https://c4model.com/review/)
+- [Apache Kafka Streams — Documentação](https://kafka.apache.org/documentation/streams/)
+- [Event Sourcing — Martin Fowler](https://martinfowler.com/eaaDev/EventSourcing.html)
+- [Domain-Driven Design — Eric Evans](https://www.domainlanguage.com/ddd/)
