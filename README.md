@@ -1,6 +1,6 @@
 # FIAP Bank – LedgerSync: Plataforma de Reconciliação Financeira
 
-> **Disciplina:** IT Architecture Design-Styles – C4 Model & Engenharia de Software  
+> **Disciplina:** IT Architecture Design-Styles  
 > **Professor:** Leonardo Pinho  
 > **Tema:** Open Banking & Arquitetura Orientada a Eventos  
 
