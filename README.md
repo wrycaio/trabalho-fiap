@@ -483,18 +483,7 @@ Adicionalmente, realizamos a verificação dos diagramas C4 segundo a lista de r
 | Não há mistura entre níveis de abstração diferentes | Sim | Sim | Sim |
 | O público-alvo do diagrama é identificável | Sim | Sim | Sim |
 
-## 32. Vídeo de Apresentação
 
-O trabalho será complementado por um vídeo de apresentação cobrindo os seguintes pontos:
-
-- Contextualização do problema de negócio: a dificuldade de conciliação entre o livro-razão e os saldos bancários reais no FIAP Bank.
-- Apresentação da solução LedgerSync e de seus componentes principais.
-- Explicação dos três níveis de diagrama C4 (Contexto, Contêiner e Componente), destacando o público adequado a cada um deles.
-- Discussão dos Requisitos Arquitetonicamente Significativos que orientaram as decisões de design.
-- Análise das principais decisões arquiteturais, seus fundamentos e os trade-offs envolvidos.
-- Demonstração de como os padrões arquiteturais estudados — Camadas, Portas e Adaptadores, Pipe and Filter e Arquitetura Orientada a Eventos — materializam-se na solução.
-
-Cada integrante do grupo apresentará uma parte do conteúdo. O vídeo será compartilhado com o professor por meio dos endereços eletrônicos `profleonardo.pinho@fiap.com.br` e `leonardo.c.pinho@gmail.com`.
 
 ## Stack Tecnológica
 
@@ -512,12 +501,4 @@ Cada integrante do grupo apresentará uma parte do conteúdo. O vídeo será com
 | Observabilidade | OpenTelemetry, Prometheus e Grafana |
 | Infraestrutura | Kubernetes em AWS EKS, gerenciado com Terraform |
 
-## Referências
 
-- Brown, S. *The C4 Model for Visualising Software Architecture*. Disponível em: https://c4model.com/
-- C4 Model Review Checklist. Disponível em: https://c4model.com/review/
-- Apache Software Foundation. *Kafka Streams Documentation*. Disponível em: https://kafka.apache.org/documentation/streams/
-- Fowler, M. *Event Sourcing*. Disponível em: https://martinfowler.com/eaaDev/EventSourcing.html
-- Evans, E. *Domain-Driven Design: Tackling Complexity in the Heart of Software*. Addison-Wesley, 2003.
-- Refactoring Guru. *Padrões de Design*. Disponível em: https://refactoring.guru/pt-br/design-patterns
-- Pinho, L. *IT Architecture Design & Styles — Slides e Materiais de Aula*. FIAP, 2024.
