@@ -1,6 +1,7 @@
 # FIAP Bank – LedgerSync: Plataforma de Reconciliação Financeira
 
 > **Disciplina:** IT Architecture Design-Styles  
+> **Repositório:** https://github.com/wrycaio/trabalho-fiap  
 > **Professor:** Leonardo Pinho  
 > **Tema:** Open Banking & Arquitetura Orientada a Eventos  
 
