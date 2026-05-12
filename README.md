@@ -348,87 +348,113 @@ C4Context
 O diagrama de Contêiner expande a plataforma, revelando os serviços, bancos de dados e infraestrutura de mensageria que a compõem. Este nível é direcionado a arquitetos de software, engenheiros e equipes de operações.
 
 ```mermaid
-C4Container
-    title FIAP Bank – LedgerSync (Diagrama de Contêiner)
+flowchart TB
+    subgraph externo["Atores Externos"]
+        direction LR
+        banco["Bancos Parceiros\n(EUA)"]
+        analista["Analistas de\nTesouraria"]
+        gerente["Gerentes de\nTesouraria"]
+        auditor["Auditores\nInternos"]
+        erp["ERP Contábil"]
+    end
 
-    Person(analista, "Analista de Tesouraria")
-    Person(gerente, "Gerente de Tesouraria")
-    Person(auditor, "Auditor Interno")
+    subgraph plataforma["Plataforma LedgerSync"]
+        direction TB
+        
+        webapp["Dashboard SPA\nReact + TypeScript"]
+        api["API Gateway\nKotlin + Spring Boot"]
+        
+        ingestion["Ingestion Service\nGo"]
+        
+        subgraph core["Núcleo de Processamento"]
+            direction LR
+            kafka["Event Bus\nApache Kafka"]
+            normalizer["Normalization\nService (Kotlin)"]
+            recon["Reconciliation\nEngine\nKotlin + Kafka Streams"]
+            ledger["Ledger Service\nKotlin + Spring Boot"]
+        end
+        
+        alert["Alert & Exception\nService (Kotlin)"]
+        
+        subgraph data["Armazenamento"]
+            direction LR
+            db["Ledger DB\nPostgreSQL"]
+            cache["Cache\nRedis"]
+            schema["Schema Registry\nConfluent"]
+        end
+    end
 
-    System_Ext(banco_parceiro, "Bancos Parceiros (EUA)")
-    System_Ext(erp, "ERP Contábil")
-
-    System_Boundary(ledgersync, "Plataforma LedgerSync") {
-        Container(webapp, "Dashboard SPA", "React + TypeScript", "Interface para analistas, gerentes e auditores")
-        Container(api, "API Gateway", "Kotlin + Spring Boot", "Autenticação, rate limiting e roteamento de requisições")
-        Container(ingestion, "Ingestion Service", "Go", "Recebe eventos dos bancos parceiros via REST, Webhook ou SFTP")
-        Container(normalizer, "Normalization Service", "Kotlin", "Converte formatos proprietários para o schema canônico da plataforma")
-        Container(kafka, "Event Bus", "Apache Kafka", "Barramento assíncrono com particionamento por conta")
-        Container(recon_engine, "Reconciliation Engine", "Kotlin + Kafka Streams", "Compara eventos externos com o livro-razão e detecta divergências")
-        Container(ledger_svc, "Ledger Service", "Kotlin + Spring Boot", "Mantém o livro-razão interno com Event Sourcing")
-        Container(alert_svc, "Alert & Exception Service", "Kotlin", "Notifica divergências e gerencia o fluxo de investigação")
-        ContainerDb(ledger_db, "Ledger DB", "PostgreSQL", "Armazenamento de eventos e projeções materializadas")
-        ContainerDb(cache, "Cache", "Redis", "Saldos recentes, sessões de usuário e controle de taxa")
-        Container(schema_reg, "Schema Registry", "Confluent", "Versionamento e governança de esquemas de eventos")
-    }
-
-    Rel(analista, webapp, "Usa o sistema", "HTTPS")
-    Rel(gerente, webapp, "Usa o sistema", "HTTPS")
-    Rel(auditor, webapp, "Usa o sistema", "HTTPS")
-    Rel(webapp, api, "Chama a API", "REST/HTTPS")
+    banco -->|"REST/Webhook/SFTP"| ingestion
+    analista -->|"HTTPS"| webapp
+    gerente -->|"HTTPS"| webapp
+    auditor -->|"HTTPS"| webapp
     
-    Rel(banco_parceiro, ingestion, "Envia transações", "REST/Webhook/SFTP")
-    Rel(ingestion, kafka, "Publica evento bruto", "Kafka")
-    Rel(kafka, normalizer, "Consome evento bruto", "Kafka")
-    Rel(normalizer, kafka, "Publica evento normalizado", "Kafka")
-    Rel(normalizer, schema_reg, "Valida e registra schema", "REST")
+    webapp -->|"REST"| api
+    api -->|"consome status"| kafka
     
-    Rel(kafka, recon_engine, "Consome eventos normalizados", "Kafka Streams")
-    Rel(kafka, ledger_svc, "Consome eventos normalizados", "Kafka")
-    Rel(ledger_svc, ledger_db, "Lê e escreve eventos", "JDBC")
-    Rel(recon_engine, ledger_db, "Consulta projeções do livro-razão", "JDBC")
-    Rel(recon_engine, kafka, "Publica eventos de match e break", "Kafka")
-    Rel(kafka, alert_svc, "Consome eventos de break", "Kafka")
-    Rel(alert_svc, kafka, "Publica alerta processado", "Kafka")
+    ingestion -->|"publica evento bruto"| kafka
+    kafka -->|"consome evento bruto"| normalizer
+    normalizer -->|"publica evento normalizado"| kafka
+    normalizer -->|"valida schema"| schema
     
-    Rel(api, kafka, "Consome eventos de status", "Kafka")
-    Rel(ledger_svc, erp, "Exporta lançamentos conciliados", "REST")
+    kafka -->|"consome eventos"| recon
+    kafka -->|"consome eventos"| ledger
+    ledger -->|"lê/escreve"| db
+    recon -->|"consulta projeções"| db
+    recon -->|"publica match/break"| kafka
+    
+    kafka -->|"consome break"| alert
+    alert -->|"publica alerta"| kafka
+    
+    ledger -->|"exporta lançamentos"| erp
 ```
+
 
 ### 29. Nível 3: Diagrama de Componente — Reconciliation Engine
 
 O diagrama de Componente detalha a estrutura interna do Reconciliation Engine, o contêiner mais complexo da plataforma. Este nível é voltado para desenvolvedores que precisam compreender a organização do código e as responsabilidades de cada módulo.
 
 ```mermaid
-C4Component
-    title Reconciliation Engine – Diagrama de Componente
-
-    Container_Boundary(recon_engine, "Reconciliation Engine") {
-        Component(matcher, "Transaction Matcher", "Kafka Streams Topology", "Pareia transações externas com lançamentos do livro-razão utilizando janela temporal e regras configuráveis")
-        Component(break_detector, "Break Detector", "Kafka Streams Topology", "Detecta transações sem correspondência, lançamentos órfãos e divergências de valor")
-        Component(window_mgr, "Window Manager", "State Store", "Gerencia janelas de conciliação independentes por banco parceiro, com TTLs distintos")
-        Component(tolerance_engine, "Tolerance Engine", "Kafka Streams Processor", "Aplica tolerâncias configuráveis antes de classificar uma diferença como divergência")
-        Component(match_store, "Match Store", "RocksDB", "Armazena o estado das correspondências dentro da janela ativa de processamento")
-        Component(recon_repo, "Reconciliation Repository", "Kotlin", "Persiste os resultados finais de conciliação na base de dados")
-        Component(status_emitter, "Status Emitter", "Kotlin", "Publica eventos de status no barramento para consumo dos demais serviços")
-        Component(config_api, "Configuration API", "REST Controller", "Permite o ajuste dinâmico de regras de conciliação e valores de tolerância")
-    }
-
-    ContainerDb(ledger_db, "Ledger DB", "PostgreSQL")
-    Container(kafka, "Event Bus", "Apache Kafka")
-    Container(api_gateway, "API Gateway")
-
-    Rel(kafka, matcher, "normalized.events + ledger.entries")
-    Rel(matcher, window_mgr, "Usa")
-    Rel(matcher, match_store, "Lê e escreve estado")
-    Rel(matcher, break_detector, "Encaminha itens não pareados")
-    Rel(break_detector, tolerance_engine, "Aplica tolerâncias configuradas")
-    Rel(tolerance_engine, recon_repo, "Persiste resultado final")
-    Rel(recon_repo, ledger_db, "Escreve", "JDBC")
-    Rel(recon_repo, status_emitter, "Notifica")
-    Rel(status_emitter, kafka, "reconciliation.status", "Kafka")
-    Rel(api_gateway, config_api, "Chama", "REST")
-    Rel(config_api, tolerance_engine, "Atualiza regras em runtime")
+flowchart TB
+    kafka["Event Bus\nApache Kafka"]
+    api_gateway["API Gateway"]
+    
+    subgraph recon_engine["Reconciliation Engine"]
+        direction TB
+        
+        subgraph entrada["Camada de Entrada"]
+            matcher["Transaction Matcher\nKafka Streams Topology"]
+        end
+        
+        subgraph processamento["Camada de Processamento"]
+            direction LR
+            window_mgr["Window Manager\nState Store"]
+            match_store["Match Store\nRocksDB"]
+            break_detector["Break Detector\nKafka Streams Topology"]
+            tolerance_engine["Tolerance Engine\nKafka Streams Processor"]
+        end
+        
+        subgraph saida["Camada de Saída"]
+            direction LR
+            recon_repo["Reconciliation\nRepository (Kotlin)"]
+            status_emitter["Status Emitter\n(Kotlin)"]
+            config_api["Configuration API\nREST Controller"]
+        end
+    end
+    
+    db["Ledger DB\nPostgreSQL"]
+    
+    kafka -->|"normalized.events\n+ ledger.entries"| matcher
+    matcher -->|"usa"| window_mgr
+    matcher -->|"lê/escreve estado"| match_store
+    matcher -->|"não pareados"| break_detector
+    break_detector -->|"aplica tolerâncias"| tolerance_engine
+    tolerance_engine -->|"persiste"| recon_repo
+    recon_repo -->|"escreve (JDBC)"| db
+    recon_repo -->|"notifica"| status_emitter
+    status_emitter -->|"reconciliation.status"| kafka
+    api_gateway -->|"REST"| config_api
+    config_api -->|"atualiza regras"| tolerance_engine
 ```
 
 ### 30. Nível 4: Código (Opcional)
